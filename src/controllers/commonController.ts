@@ -2,41 +2,44 @@ import {Request,Response} from "express";
 import {CommonServices} from '../services/commonServices';
 
 export class CommonContoller{
-    public static async requestWfh (req:Request,res:Response){
+    public static async requestWfh (req:Request,res:Response):Promise<Response>{
         try{
-            const {orgUniqName,userEmail,wfhReason,availedAtDay,availedAtMonth,availedAtYear}=req.body;
+            const {email,organisation,availedAt,requestSubmissionReason}=req.body;
             const rejectionReason="";
-            const requestStatus="pending";
-            const approvalAtDay=0;
-            const approvalAtMonth=0;
-            const approvalAtYear=0;
-            
-            const date=new Date();
-            const createdAtDay=date.getDate();
-            const createdAtMonth=date.getMonth();
-            const createdAtYear=date.getFullYear();
-
-            const result=await CommonServices.requestWfhService(
-                orgUniqName,userEmail,rejectionReason,wfhReason,requestStatus,
-                availedAtDay,   availedAtMonth,  availedAtYear, 
-                approvalAtDay,  approvalAtMonth, approvalAtYear, 
-                createdAtDay,   createdAtMonth,  createdAtYear 
-            );
-            res.send(result);
+            const requestStatus="Pending";
+            const today=new Date();
+            const createdAt=new Date(today.getFullYear(),today.getMonth(),today.getDate(),0,0,0,0);
+            const obj={orgUniqName:organisation,userEmail:email,rejectionReason,wfhReason:requestSubmissionReason,requestStatus,availedAt,createdAt}
+            const result=await CommonServices.requestWfhService(obj);
+            if(result) return res.send({status:200,message:"Requested Accepted"});
+            else return res.send({status:400,message:"Failed to Accepted"});
         }
         catch(err){
-            res.send({success:false});
+            return res.send({status:400,message:"Something went wrong"});
         }
     }
 
-    public static async calender (req:Request,res:Response){
+    public static async userWfh (req:Request,res:Response):Promise<Response>{
         try{
-            const {orgUniqName,userEmail}=req.body;
-            const result=await CommonServices.getCalenderData(orgUniqName,userEmail);
-            res.send(result);
+            const {email,organisation}=req.body;
+            const result=await CommonServices.userWfhService(organisation,email);
+            if(typeof result!=='boolean') return res.send({status:200,message:"Success",wfh:result.wfh,maxWfh:result.maxWfh});
+            else return res.send({status:400,message:"Something went wrong"});
         }
         catch(err){
-            res.send({success:false});
+            return res.send({status:400,message:"Something went wrong"});
+        }
+    }
+
+    public static async calender (req:Request,res:Response):Promise<Response>{
+        try{
+            const {email,organisation}=req.body;
+            const result=await CommonServices.getCalenderData(organisation,email);
+            if(typeof result!=='boolean')return res.send({status:200,data:result.result,wfh:result.wfh,maxWfh:result.maxWfh,message:"Success"});
+            else return res.send({status:400,data:[],wfh:0,maxWfh:0,message:"Faild to fetch"});
+        }
+        catch(err){
+            return res.send({status:402,data:[],message:"Something went wrong"});
         }
     }    
 }

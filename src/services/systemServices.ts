@@ -1,112 +1,103 @@
 import { OrganisationDao } from '../dao/organisationDao';
 import { UserDao } from '../dao/userDao';
+import { RequestsDao } from '../dao/requestsDao';
+import { AddUserService, CreateOrganisation, EditUserService, OrganisationList, OrganisationData } from '../typings/system.types';
+import { EditOrganisation } from '../typings/orgnisationTypings';
 
-export class SystemServices{
-    public static async getOrganisationList(systemUser:string){
-        try{
-            const res=await OrganisationDao.getOrganisatioBySystemUser(systemUser);
-            if(!res){return {success:false};}
-            let orgUniqName=[];
-            let orgDisplayName=[];
-            let orgAdmin=[];
-            let maxWfh=[];
+export class SystemServices {
 
-            for(let i=0;i<res.length;i++){
-                orgUniqName.push(res[i].orgUniqName);
-                orgDisplayName.push(res[i].orgDisplayName);
-                orgAdmin.push(res[i].orgAdmin);
-                maxWfh.push(res[i].maxWfh);
+    public static async getOrganisationList(): Promise<OrganisationList[]> {
+        try {
+            const res = await OrganisationDao.getOrganisations();
+            let result = [];
+            for (let i = 0; i < res.length; i++) {
+                result.push({'id':i+1, 'orgUniqName': res[i]['orgUniqName'], 'orgDisplayName': res[i]['orgDisplayName'], 'orgAdmin': res[i]['orgAdmin'], 'maxWfh': res[i]['maxWfh'] });
             }
-
-            return {success:true,orgUniqName,orgDisplayName,orgAdmin,maxWfh};
-        }catch(e){return {success:false};}
+            return result;
+        } catch (e) { return []; }
     }
 
-    public static async getOrganisationData (orgUniqName:string){
-        try{
-            const res=await UserDao.getUserByOrgUniqName(orgUniqName);
-            if(!res){return {success:false};}
-            let userId=[];
-            let userEmail=[]
-            let firstName=[];
-            let lastName=[];
-            let wfh=[];
-            let dateOfJoiningDay=[];
-            let dateOfJoiningMonth=[];
-            let dateOfJoiningYear=[];
-
-            for(let i=0;i<res.length;i++){
-                userId.push(res[i].userId);
-                userEmail.push(res[i].userEmail);
-                firstName.push(res[i].firstName);
-                lastName.push(res[i].lastName);
-                wfh.push(res[i].wfh);
-                dateOfJoiningDay.push(res[i].dateOfJoiningDay);
-                dateOfJoiningMonth.push(res[i].dateOfJoiningMonth);
-                dateOfJoiningYear.push(res[i].dateOfJoiningYear);
+    public static async getOrganisationData(orgUniqName: string): Promise<OrganisationData[]> {
+        try {
+            const res = await UserDao.getUserByOrgUniqName(orgUniqName);
+            let result = [];
+            for (let i = 0; i < res.length; i++) {
+                result.push({ 'id':i+1,'firstName': res[i]['firstName'], 'lastName': res[i]['lastName'], 'userEmail': res[i]['userEmail'], 'dateOfJoining': res[i]['dateOfJoining'], 'dateOfBirth': res[i]['dateOfBirth'], 'wfh': res[i]['wfh'] });
             }
-            
-            return {success:true,userId,userEmail,firstName,lastName,wfh,dateOfJoiningDay,dateOfJoiningMonth,dateOfJoiningYear};
-        }catch(e){return {success:false};}
+            return result;
+
+        } catch (e) { return []; }
     }
 
-    public static async createOrganisationService(orgUniqName:string, orgDisplayName:string, orgAdmin:string, maxWfh:number, systemUser:string){
-        try{
-            const org=await OrganisationDao.getOrganisationByOrgUniqName(orgUniqName);
-            if(org){
-                return {success:false}
+    public static async createOrganisationService(obj: CreateOrganisation): Promise<boolean> {
+        try {
+            const org = await OrganisationDao.getOrganisationByOrgUniqName(obj.orgUniqName);
+            if (org) return false;
+            const res = await OrganisationDao.addOrganisation(obj);
+            if (!res) { return false; }
+            return true;
+        } catch (e) { return false; }
+    }
+
+    public static async editOrganisationService(obj: EditOrganisation): Promise<boolean> {
+        try {
+            const org = await OrganisationDao.getOrganisationByOrgUniqName(obj.orgUniqName);
+            if (typeof org !== 'boolean' && org['orgUniqName'] !== obj.oldOrgUniqName) return false;
+
+            const res = await OrganisationDao.editOrganisationbyOrgUniqName(obj);
+            if (!res) return false;
+
+            const res2 = await RequestsDao.updateOrgUniqname(obj.oldOrgUniqName, obj.orgUniqName);
+            const res3 = await UserDao.updateOrgUniqname(obj.oldOrgUniqName, obj.orgUniqName);
+
+            return true;
+        } catch (e) { console.log("err", e); return false; }
+    }
+
+    public static async deleteOrganisationService(orgUniqName: string): Promise<boolean> {
+        try {
+            const res = await OrganisationDao.deleteOrganisationByOrgUniqNameAndSystemUser(orgUniqName);
+            if (!res) { return false; }
+            return true;
+        } catch (e) { console.log("err", e); return false; }
+    }
+
+    public static async addUserService(obj: AddUserService): Promise<boolean> {
+        try {
+            const user = await UserDao.getUserByOrgUniqNameAndUserEmail(obj.orgUniqName, obj.userEmail);
+            if (user) return false;
+
+            const res = await UserDao.addUser(obj);
+            if (!res) { return false; }
+
+            return true;
+        } catch (e) { return false; }
+    }
+
+    public static async editUserService(obj: EditUserService): Promise<boolean> {
+        try {
+            const user = await UserDao.getUserByOrgUniqNameAndUserEmail(obj.orgUniqName, obj.userOldEmail);
+            if ( user && user['userEmail'] !== obj.userOldEmail) return false;
+
+            if (obj.userOldEmail != obj.userEmail) {
+                const org = await OrganisationDao.getOrganisationByOrgUniqName(obj.orgUniqName);
+                if (typeof org === 'boolean') return false;
+                if (org['orgAdmin'] === obj.userOldEmail) {
+                    const change = OrganisationDao.editOrganisationAdminbyOrgUniqName(obj.orgUniqName, obj.userEmail);
+                    if (!change) return false;
+                }
             }
-
-            const res=await OrganisationDao.addOrganisation(orgUniqName, orgDisplayName, orgAdmin, maxWfh, systemUser);
-            if(!res){return {success:false};}
-            return {success:true};
-        }catch(e){return {success:false};}
+            const res = await UserDao.editUser(obj);
+            if (!res) { return false; }
+            return true;
+        } catch (e) { return false; }
     }
 
-    public static async editOrganisationService(oldOrgUniqName:string,orgUniqName:string, orgDisplayName:string, orgAdmin:string, maxWfh:number, systemUser:string){
-        try{
-            const org=await OrganisationDao.getOrganisationByOrgUniqName(orgUniqName);
-            if(org){
-                return {success:false}
-            }
-
-            const res=await OrganisationDao.editOrganisationbyOrgUniqNameAnsSystemUser(oldOrgUniqName, orgUniqName, orgDisplayName, orgAdmin, maxWfh, systemUser);
-            if(!res){return {success:false};}
-            return {success:true};
-        }catch(e){return {success:false};}
+    public static async removeUserService(userEmail: string, orgUniqName: string): Promise<boolean> {
+        try {
+            const res = await UserDao.deleteUser(userEmail, orgUniqName);
+            if (!res) { return false; }
+            return true;
+        } catch (e) { return false; }
     }
-
-    public static async deleteOrganisationService(orgUniqName:string, systemUser:string){
-        try{
-            const res=await OrganisationDao.deleteOrganisationByOrgUniqNameAndSystemUser(orgUniqName, systemUser);
-            if(!res){return {success:false};}
-            return {success:true};
-        }catch(e){return {success:false};}
-    }
-
-    public static async addUserService(
-        userId:string,   userEmail:string,    orgUniqName:string,    firstName:string,    lastName:string,
-        dateOfBirthDay:number,      dateOfBirthMonth:number,    dateOfBirthYear:number,
-        dateOfJoiningDay:number,    dateOfJoiningMonth:number,  dateOfJoiningYear:number
-    ){
-        try{
-
-            const user=await UserDao.getUserByOrgUniqNameAndUserEmail(orgUniqName,userEmail);
-            if(user){
-                return {success:false}
-            }
-
-            const res= await UserDao.addUser(userId,userEmail,orgUniqName,firstName,lastName,dateOfBirthDay,dateOfBirthMonth,dateOfBirthYear,dateOfJoiningDay,dateOfJoiningMonth,dateOfJoiningYear);
-            if(!res){return {success:false};}
-            return {success:true};
-        }catch(e){return {success:false};}
-    }
-
-    public static async removeUserService(userEmail:string,orgUniqName:string){
-        try{
-            const res= await UserDao.deleteUser(userEmail,orgUniqName);
-            if(!res){return {success:false};}
-            return {success:true};
-        }catch(e){return {success:false};}
-    }    
 }

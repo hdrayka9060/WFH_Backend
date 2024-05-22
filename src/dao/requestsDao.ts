@@ -1,42 +1,55 @@
+import { AddRequest, RequestsRow, UpdateRequest } from "../typings/requestsTypings";
 import { RequestsModel } from "../models/requestsModel";
 
 export class RequestsDao{
-    public static async getRequestsByOrgUniqNameAndUserEmail(orgUniqName:string,userEmail:string){
+    public static async getRequestsByOrgUniqNameAndUserEmail(orgUniqName:string,userEmail:string):Promise<RequestsRow[]|boolean>{
         try{
-            return await RequestsModel.find({orgUniqName,userEmail,deleted:false}).orFail() ;
-        }catch(e){return null;}
+            const res:RequestsRow[]= await RequestsModel.find({orgUniqName,userEmail,deleted:false});
+            return res;
+        }catch(e){return false;}
     }
 
-    public static async getRequestsByOrgUniqNameAndRequestStatus(orgUniqName:string,requestStatus:string){
+    public static async getRequestsByOrgUniqNameAndRequestStatus(orgUniqName:string,requestStatus:string):Promise<RequestsRow[]|boolean>{
         try{
-            return await RequestsModel.find({orgUniqName,requestStatus,deleted:false}).orFail() ;
-        }catch(e){return null;}
+            const res:RequestsRow[]= await RequestsModel.find({orgUniqName,requestStatus,deleted:false});
+            return res;
+        }catch(e){return false;}
     }
 
-    public static async addRequest(
-        orgUniqName:string,    userEmail:string,       rejectionReason:string, wfhReason:string,  requestStatus:string,  
-        availedAtDay:number,   availedAtMonth:number,  availedAtYear:number, 
-        approvalAtDay:number,  approvalAtMonth:number, approvalAtYear:number, 
-        createdAtDay:number,   createdAtMonth:number,  createdAtYear:number 
-    ){
+    public static async getRequestsByOrgUniqNameAndAvailedAt(orgUniqName:string,availedAt:Date):Promise<RequestsRow[]|boolean>{
         try{
-            return await RequestsModel.insertMany([{orgUniqName,userEmail,requestStatus, rejectionReason, wfhReason, deleted:false,
-                approvalAtDay,approvalAtMonth,approvalAtYear,createdAtDay,createdAtMonth,createdAtYear,availedAtDay,availedAtMonth,availedAtYear
-            }]);
-        }catch(e){return null;}
+            const res:RequestsRow[]= await RequestsModel.find({orgUniqName,availedAt,deleted:false});
+            return res;
+        }catch(e){return false;}
     }
 
-    public static async updateRequestByOrgUniqNameAndUserEmailAndUserAndAvailedAtAndRequestStatus(
-        orgUniqName:string,     userEmail:string,        requestStatus:string,   
-        availedAtDay:number,    availedAtMonth:number,   availedAtYear:number,
-        rejectionReason:string, oldRequestStatus:string
-    ){
+    public static async getRequestsByOrgUniqNameAndCreatedAt(orgUniqName:string,createdAt:Date):Promise<RequestsRow[]|boolean>{
         try{
-            const date=new Date();
-            const approvalAtDay=date.getDate();
-            const approvalAtMonth=date.getMonth();
-            const approvalAtYear=date.getFullYear();
-            return await RequestsModel.updateOne({orgUniqName,userEmail,availedAtDay,availedAtMonth,availedAtYear,requestStatus:oldRequestStatus,deleted:false},{$set:{rejectionReason:rejectionReason, approvalAtDay,approvalAtMonth,approvalAtYear, requestStatus}})
-        }catch(e){return null;}
+            const res:RequestsRow[]= await RequestsModel.find({orgUniqName,createdAt,deleted:false});
+            return res;
+        }catch(e){return false;}
+    }
+
+    public static async addRequest(obj:AddRequest):Promise<boolean>{
+        try{
+            await RequestsModel.create({orgUniqName:obj.orgUniqName,userEmail:obj.userEmail,requestStatus:obj.requestStatus, rejectionReason:obj.rejectionReason, wfhReason:obj.wfhReason, deleted:false,createdAt:obj.createdAt,availedAt:obj.availedAt});
+            return true;
+        }catch(e){return false;}
+    }
+
+    public static async updateRequestByOrgUniqNameAndUserEmailAndUserAndAvailedAtAndRequestStatus(obj:UpdateRequest):Promise<boolean>{
+        try{
+            const approvalAt=new Date(new Date().getFullYear(),new Date().getMonth(),new Date().getDate(),0,0,0,0);
+            const res= await RequestsModel.updateOne({orgUniqName:obj.orgUniqName,userEmail:obj.userEmail,availedAt:obj.availedAt,requestStatus:obj.oldRequestStatus,deleted:false},{$set:{rejectionReason:obj.rejectionReason, approvalAt, requestStatus:obj.requestStatus}})
+            if(res.modifiedCount===1)return true;
+            return false;
+        }catch(e){return false;}
     }   
+    public static  async updateOrgUniqname(oldOrgUniqName:string,orgUniqName:string):Promise<boolean>{
+        try{
+            const res=await  RequestsModel.updateMany({orgUniqName:oldOrgUniqName,deleted:false},{$set:{orgUniqName}});
+            if(res.modifiedCount>0)return true;
+            return false;
+        }catch(e){return false;}
+    }
 }

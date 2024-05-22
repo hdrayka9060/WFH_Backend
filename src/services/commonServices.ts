@@ -1,63 +1,48 @@
+import { UserDao } from '../dao/userDao';
 import { RequestsDao } from '../dao/requestsDao';
+import { OrganisationDao } from '../dao/organisationDao';
+import { RequestWfh,CalenderData } from '../typings/commonTypings';
+import { UserRow } from '../typings/userTypings';
+import { OrganisationRow } from '../typings/orgnisationTypings';
+import { RequestsRow } from 'typings/requestsTypings';
 
 export class CommonServices{
-    public static async requestWfhService (
-        orgUniqName:string,    userEmail:string,       rejectionReason:string, wfhReason:string,  requestStatus:string,  
-        availedAtDay:number,   availedAtMonth:number,  availedAtYear:number, 
-        approvalAtDay:number,  approvalAtMonth:number, approvalAtYear:number, 
-        createdAtDay:number,   createdAtMonth:number,  createdAtYear:number 
-    ){
+    public static async requestWfhService (obj:RequestWfh):Promise<boolean>{
         try{
-            const res=await RequestsDao.addRequest(
-                orgUniqName,userEmail,rejectionReason,wfhReason,requestStatus,
-                availedAtDay,   availedAtMonth,  availedAtYear, 
-                approvalAtDay,  approvalAtMonth, approvalAtYear, 
-                createdAtDay,   createdAtMonth,  createdAtYear 
-            );
-            if(!res){return {success:false};}
-            return {success:true};        
-        }catch(e){return {success:false};}
+            const res=await RequestsDao.addRequest(obj);
+            const user=await UserDao.getUserByOrgUniqNameAndUserEmail(obj.orgUniqName,obj.userEmail);
+            if(typeof res==='boolean'||typeof user==='boolean'){return false }
+            const wfh=await UserDao.updateUserWfh({userEmail:obj.userEmail,orgUniqName:obj.orgUniqName,wfh:user['wfh']+1});
+            if(!wfh)return false;
+            return true;        
+        }catch(e){return false;}
     }
 
-    public static async getCalenderData(orgUniqName:string,userEmail:string){
+    public static async userWfhService (orgUniqName:string, userEmail:string):Promise<{wfh:number,maxWfh:number}|boolean>{
         try{
-            const res=await RequestsDao.getRequestsByOrgUniqNameAndUserEmail(orgUniqName,userEmail);
-            if(!res){return {success:false};}
+            const user:UserRow|boolean=await UserDao.getUserByOrgUniqNameAndUserEmail(orgUniqName,userEmail);
+            const org:OrganisationRow|boolean=await OrganisationDao.getOrganisationByOrgUniqName(orgUniqName);
+            if(typeof user==='boolean' || typeof org==='boolean'){return false;}
+            return {wfh:user['wfh'],maxWfh:org['maxWfh']}       
+        }catch(e){return false;}
+    }
 
-            let requestStatus=[]
-            let rejectionReason=[]
-            let wfhReason=[]
+    public static async getCalenderData(orgUniqName:string,userEmail:string):Promise<{result:CalenderData[],wfh:number,maxWfh:number}|boolean>{
+        try{
+            const res:RequestsRow[]|boolean=await RequestsDao.getRequestsByOrgUniqNameAndUserEmail(orgUniqName,userEmail);
+            const user:UserRow|boolean=await UserDao.getUserByOrgUniqNameAndUserEmail(orgUniqName,userEmail);
+            const org:OrganisationRow|boolean=await OrganisationDao.getOrganisationByOrgUniqName(orgUniqName);
 
-            let approvalAtDay=[]
-            let approvalAtMonth=[]
-            let approvalAtYear=[]
+            if(typeof res==='boolean'||typeof user==='boolean'||typeof org==='boolean'){return false;}
 
-            let createdAtDay=[]
-            let createdAtMonth=[]
-            let createdAtYear=[]
+            const wfh=user['wfh'];
+            const maxWfh=org['maxWfh'];
             
-            let availedAtDay=[]
-            let availedAtMonth=[]
-            let availedAtYear=[]        
-            
+            let result=[];
             for(let i=0;i<res.length;i++){
-                requestStatus.push(res[i].requestStatus)
-                rejectionReason.push(res[i].rejectionReason)
-                wfhReason.push(res[i].wfhReason)
-
-                approvalAtDay.push(res[i].approvalAtDay)
-                approvalAtMonth.push(res[i].approvalAtMonth)
-                approvalAtYear.push(res[i].approvalAtYear)
-
-                createdAtDay.push(res[i].createdAtDay)
-                createdAtMonth.push(res[i].createdAtMonth)
-                createdAtYear.push(res[i].createdAtYear)
-                
-                availedAtDay.push(res[i].availedAtDay)
-                availedAtMonth.push(res[i].availedAtMonth)
-                availedAtYear.push(res[i].availedAtYear)
+                result.push({requestStatus:res[i]['requestStatus'],rejectionReason:res[i]['rejectionReason'],wfhReason:res[i]['wfhReason'],approvalAt:res[i]['approvalAt'],createdAt:res[i]['createdAt'],availedAt:res[i]['availedAt']})
             }
-            return {success:true,requestStatus,rejectionReason,wfhReason,approvalAtDay,approvalAtMonth,approvalAtYear,createdAtDay,createdAtMonth,createdAtYear,availedAtDay,availedAtMonth,availedAtYear};
-        }catch(e){return {success:false};}
+            return {result:result,wfh:wfh,maxWfh:maxWfh};
+        }catch(e){return false;}
     }    
 }

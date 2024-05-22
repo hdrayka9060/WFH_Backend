@@ -1,15 +1,26 @@
-import otpGenerator from 'otp-generator';
 import nodemailer from 'nodemailer';
 import { OtpDao } from '../dao/otpDao';
+import { UserDao } from '../dao/userDao';
 import { HOST,PORT,EMAIL,PASS } from "../constants/nodeMailerCredentials";
+import { OrganisationDao } from '../dao/organisationDao';
+import { SystemUserDao } from '../dao/systemUserDao';
+import { EmailOtpTime } from '../typings/otpTypings';
 
 export class OtpServices{
-    public static async generateOtp(){
-        const otp = otpGenerator.generate(6, { digits: true, lowerCaseAlphabets: false, upperCaseAlphabets: false, specialChars: false });
+
+    public static async getOrganisations():Promise<string[]>{
+        const res=await OrganisationDao.getOrganisations();
+        let result=[];
+        for(let i=0;i<res.length;i++)result.push(res[i]['orgUniqName']);
+        return result;
+    }
+    
+    public static generateOtp():string{
+        const otp = Math.floor((1+Math.random())*100000);
         return otp.toString();
     }
 
-    public static async sendOtp (email:string,otp:string){
+    public static async sendOtp (email:string,otp:string):Promise<void>{
         const transporter =nodemailer.createTransport({
             host:HOST,
             port:PORT,
@@ -19,7 +30,7 @@ export class OtpServices{
             }
         });
 
-        transporter.sendMail({
+        await transporter.sendMail({
             from: EMAIL,
             to: `${email}`,
             subject: 'OTP Verification',
@@ -28,9 +39,10 @@ export class OtpServices{
     }
 
     public static async validateOtp (email:string, otp:string):Promise<boolean>{
-        const user=await OtpDao.getUser(email);
-        const currentTime=new Date().getTime();
         try{
+            const user=await OtpDao.getUser(email);
+            if(typeof user==='boolean')return false;
+            const currentTime=new Date().getTime();
             if(user.otp==otp && (currentTime - user.time) < 15*60)return true;
         }
         catch(err){console.log("error",err);}
@@ -38,8 +50,55 @@ export class OtpServices{
         return true;
     }
 
-    public static async getUserService(email:string){return OtpDao.getUser(email);}
-    public static async addUserService(email:string,otp:string,time:number){return OtpDao.addUser(email,otp,time);}
-    public static async updateUserService(email:string,otp:string,time:number){return OtpDao.updateUser(email,otp,time);}
+    public static async verifyUser(organisation:string,email:string):Promise<|string|boolean>{
+        if(await UserDao.getUserByOrgUniqNameAndUserEmail(organisation,email)){
+            const res=await OrganisationDao.getOrganisationByOrgUniqName(organisation);
+            if(typeof res!=='boolean')return res.orgAdmin;
+            return false;
+        }
+        return false;
+    }
+
+    public static async getSystemUser(email:string):Promise<boolean>{
+        try{
+            const org=await SystemUserDao.getSystemUser(email);
+            if(!org) return false;
+            return true;
+        }catch(e){console.log("err",e);return false;}
+    }
+    
+
+    public static async getOrganisationByOrgUniqName(organisation:string):Promise<string|boolean>{
+        try{
+            const res= await OrganisationDao.getOrganisationByOrgUniqName(organisation);
+            if(typeof res!=='boolean')return res.orgAdmin;
+            return false;
+        }catch(e){console.log("err",e);return false;}
+    }
+    public static async getUserService(email:string):Promise<EmailOtpTime|boolean>{
+        try{
+            const res= await OtpDao.getUser(email);
+            if(typeof res==='boolean')return false;
+            return res;
+        }catch(e){console.log("err",e);return false;}
+    }
+    public static async addUserService(obj:EmailOtpTime):Promise<boolean>{
+        try{
+            const res= await OtpDao.addUser(obj);
+            return res;
+        }catch(e){console.log("err",e);return false;}
+    }
+    public static async updateUserService(obj:EmailOtpTime){
+        try{
+            const res= await OtpDao.updateUser(obj);
+            return res;
+        }catch(e){console.log("err",e);return false;}
+    }
+    public static async getUserByOrgUniqNameAndUserEmail(organisation:string,email:string){
+        try{
+            const res= await UserDao.getUserByOrgUniqNameAndUserEmail(organisation,email);
+            return res;
+        }catch(e){console.log("err",e);return false;}
+    }
 }
 
