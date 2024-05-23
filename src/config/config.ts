@@ -1,7 +1,5 @@
 import express,{Express} from "express";
-import { CorsOptions } from "cors";
 import router from "../routes/index";
-import bodyParser from 'body-parser';
 import { APP_PORT } from "../constants/appConstants";
 import cors from "./cores";
 
@@ -49,7 +47,7 @@ class App{
         // });
         // this.app.use(cors());
 
-        this.app.use(cors);
+        // this.app.use(cors);
     }
 
     public async listen():Promise<void>{

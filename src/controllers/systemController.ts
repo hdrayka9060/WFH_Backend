@@ -5,19 +5,36 @@ export class SystemController {
 
     public static async organisationList(req: Request, res: Response):Promise<Response> {
         try {
-            const result = await SystemServices.getOrganisationList();
-            return res.send({ status: 200, data: result, message: "Success" });
+            const {page,limit}=req.body;
+            // console.log('controller',page,limit)
+            const result = await SystemServices.getOrganisationList(page,limit);
+            const totalRecords=await SystemServices.getOrganisationListCount();
+            // console.log("totRec",totalRecords);
+            return res.send({ status: 200, data: result, message: "Success",totalRecords:totalRecords});
         }
         catch (err) {
             console.log('err', err)
-            return res.send({ status: 400, data: [], message: "Something went wrong" });
+            return res.send({ status: 400, data: [], message: "Something went wrong",totalRecords:0 });
         }
     }
 
     public static async organisationData(req: Request, res: Response):Promise<Response> {
         try {
+            const { organisationUniqueName,page,limit } = req.body;
+            // console.log(organisationUniqueName,page,limit);
+            const result = await SystemServices.getOrganisationData(organisationUniqueName,page,limit);
+            const totalRecords=await SystemServices.getOrganisationDataCount(organisationUniqueName);
+            return res.send({ status: 200, data: result, message: "Success",totalRecords:totalRecords });
+        }
+        catch (err) {
+            return res.send({ status: 400, data: [], message: "Something went wrong",totalRecords:0 });
+        }
+    }
+
+    public static async organisationUsers(req: Request, res: Response):Promise<Response> {
+        try {
             const { organisationUniqueName } = req.body;
-            const result = await SystemServices.getOrganisationData(organisationUniqueName);
+            const result = await SystemServices.getOrganisationUsers(organisationUniqueName);
             return res.send({ status: 200, data: result, message: "Success" });
         }
         catch (err) {
@@ -40,11 +57,13 @@ export class SystemController {
 
     public static async editOrganisation(req: Request, res: Response):Promise<Response> {
         try {
+            
             const { organisationUniqueName, organisationNewUniqueName, organisationNewDisplayName, organisationNewAdmin, organisationNewMaxWfh } = req.body
             const obj = { oldOrgUniqName: organisationUniqueName, orgUniqName: organisationNewUniqueName, orgDisplayName: organisationNewDisplayName, orgAdmin: organisationNewAdmin, maxWfh: organisationNewMaxWfh }
+            // console.log("controller body",req.body);
             const result = await SystemServices.editOrganisationService(obj);
             if (result) return res.send({ status: 200, message: "Organisation Edited" });
-            else return res.send({ status: 400, message: "Please check youe credentials" });
+            else return res.send({ status: 400, message: "Credentials Invalid" });
         }
         catch (err) {
             return res.send({ status: 400, message: "Something went wrong" });
@@ -54,7 +73,7 @@ export class SystemController {
     public static async deleteOrganisation(req: Request, res: Response):Promise<Response> {
         try {
             const { organisationUniqueName } = req.body;
-            console.log(organisationUniqueName)
+            // console.log(organisationUniqueName)
             const result = await SystemServices.deleteOrganisationService(organisationUniqueName);
             if (result) return res.send({ status: 200, message: "Deleted succesfully" });
             else return res.send({ status: 400, message: "Failed to Delete" });

@@ -9,9 +9,10 @@ import { RequestsRow } from 'typings/requestsTypings';
 export class CommonServices{
     public static async requestWfhService (obj:RequestWfh):Promise<boolean>{
         try{
-            const res=await RequestsDao.addRequest(obj);
             const user=await UserDao.getUserByOrgUniqNameAndUserEmail(obj.orgUniqName,obj.userEmail);
-            if(typeof res==='boolean'||typeof user==='boolean'){return false }
+            const res=await RequestsDao.addRequest(obj);
+            
+            if(typeof user==='boolean'){return false }
             const wfh=await UserDao.updateUserWfh({userEmail:obj.userEmail,orgUniqName:obj.orgUniqName,wfh:user['wfh']+1});
             if(!wfh)return false;
             return true;        

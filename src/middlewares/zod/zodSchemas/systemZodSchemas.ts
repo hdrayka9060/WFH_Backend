@@ -1,8 +1,17 @@
 import {z} from 'zod';
-import { DateOfBirthZodSchema, FirstNameZodSchema, LastNameZodSchema, OrganiationUserEmailZodSchema, OrganisationDisplayNameZodSchema, OrganisationMaxWfhZodSchema, OrganisationNewDisplayNameZodSchema, OrganisationNewMaxWfh, OrganisationNewUniqueNameZodSchema, OrganisationUniqueNameZodSchema, OrganisationUserOldEmailZodSchema, TokenZodSchema } from './zodSchemas';
+import { DateOfBirthZodSchema, FirstNameZodSchema, LastNameZodSchema, OrganiationUserEmailZodSchema, OrganisationDisplayNameZodSchema, OrganisationMaxWfhZodSchema, OrganisationNewDisplayNameZodSchema, OrganisationNewMaxWfh, OrganisationNewUniqueNameZodSchema, OrganisationUniqueNameZodSchema, OrganisationUserOldEmailZodSchema, OrganisationNewAdminZodSchema,LimitZodSchema,PageZodSchema } from './zodSchemas';
+
+export const OrganisationListZodSchema=z.object({})
+                                        .merge(PageZodSchema)
+                                        .merge(LimitZodSchema)
 
 export const OrganisationDataZodSchema=z.object({})
                                         .merge(OrganisationUniqueNameZodSchema)
+                                        .merge(PageZodSchema)
+                                        .merge(LimitZodSchema)
+
+export const OrganisationUsersZodSchema=z.object({})
+                                         .merge(OrganisationUniqueNameZodSchema)
 
 export const CreateOrganisationZodSchema=z.object({})
                                           .merge(OrganisationUniqueNameZodSchema)
@@ -14,6 +23,7 @@ export const EditOrganisationZodSchema=z.object({})
                                         .merge(OrganisationNewUniqueNameZodSchema)
                                         .merge(OrganisationNewDisplayNameZodSchema)
                                         .merge(OrganisationNewMaxWfh)
+                                        .merge(OrganisationNewAdminZodSchema)
 
 export const DeleteOrganisationZodSchema=z.object({})
                                           .merge(OrganisationUniqueNameZodSchema)

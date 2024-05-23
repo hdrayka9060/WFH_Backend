@@ -5,9 +5,11 @@ import { TypedRequestBody } from "../typings/adminTypings";
 export class AdminController {
     public static async requestList(req: Request, res: Response):Promise<Response> {
         try {
-            const { organisation } = req.body;
-            const result = await AdminServices.getRequestList(organisation);
-            return res.send({ status: 200, data: result, messsage: "Success" });
+            const { organisation,page,limit } = req.body;
+            const result = await AdminServices.getRequestList(organisation,page,limit);
+            const totalRecords=await AdminServices.getRequestListCount(organisation);
+            // console.log('result',result)
+            return res.send({ status: 200, data: result, messsage: "Success", totalRecords:totalRecords });
         }
         catch (err) {
             return res.send({ status: 400, data: [], message: "Something went wrong" });
@@ -27,9 +29,9 @@ export class AdminController {
 
     public static async filterRequestList(req: Request, res: Response):Promise<Response> {
         try {
-            const { organisation,filterType,requestStatus,user,date } = req.body;
+            const { organisation,filterType,requestStatus,user,date,page,limit } = req.body;
             // console.log(organisation,filterType,requestStatus,user,date);
-            const obj={orgUniqName:organisation,filterType,requestStatus,user,date};
+            const obj={orgUniqName:organisation,filterType,requestStatus,user,date,page,limit};
             const result = await AdminServices.getFilterRequestList(obj);
             return res.send({ status: 200, data: result, messsage: "Success" });
         }

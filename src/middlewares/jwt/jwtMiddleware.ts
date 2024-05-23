@@ -17,7 +17,7 @@ export class JwtMiddleware{
             const token=bearer.split(' ')[1];
             const data:JwtPayloadType=jwt.verify(token,secretKey) as JwtPayloadType;
             if(data.userType!=='system')return res.send({status:400,message:"User not autharised"});
-    
+            
             req.body.email=data.email;
             req.body.organisation=data.organisation;
             return next();
@@ -50,9 +50,11 @@ export class JwtMiddleware{
             const bearer=req.headers.authorization;
             if(typeof bearer==='undefined')return res.send({status:400,message:"User not authorised"});
 
+            // console.log("jwt",req.body);
+
             const token=bearer.split(' ')[1];
             const data:JwtPayloadType=jwt.verify(token,secretKey) as JwtPayloadType;
-            if(data.userType!=='user')return res.send({status:400,message:"User not autharised"});
+            if(!(data.userType==='user'||data.userType==='admin'))return res.send({status:400,message:"User not autharised"});
 
             req.body.email=data.email;
             req.body.organisation=data.organisation;

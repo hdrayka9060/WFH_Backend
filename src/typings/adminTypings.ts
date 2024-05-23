@@ -3,7 +3,9 @@ export interface GetFilterRequestList{
     filterType:string,
     requestStatus:string|undefined,
     user:string|undefined,
-    date:Date|undefined
+    date:Date|undefined,
+    page:number,
+    limit:number
 }
 
 export interface UpdateRequestService{
@@ -19,6 +21,7 @@ export interface GetRequestList{
     id:number,
     name:string,
     userEmail:string,
+    wfhReason:string,
     wfh:number,
     availedAt:Date,
     createdAt:Date,

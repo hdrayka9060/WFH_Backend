@@ -2,9 +2,31 @@ import { AddRequest, RequestsRow, UpdateRequest } from "../typings/requestsTypin
 import { RequestsModel } from "../models/requestsModel";
 
 export class RequestsDao{
+
+    public static async getSkipedRequestsByOrgUniqNameAndUserEmail(orgUniqName:string,userEmail:string,page:number,limit:number){
+        try{
+            const skip=(page-1)*limit;
+            const res= await RequestsModel.find({orgUniqName,userEmail,deleted:false}).skip(skip).limit(limit);
+            return res;
+        }catch(e){return false;}
+    }
+
     public static async getRequestsByOrgUniqNameAndUserEmail(orgUniqName:string,userEmail:string):Promise<RequestsRow[]|boolean>{
         try{
             const res:RequestsRow[]= await RequestsModel.find({orgUniqName,userEmail,deleted:false});
+            return res;
+        }catch(e){return false;}
+    }
+
+    public static async getOrganisationListCount(orgUniqName:string):Promise<number>{
+        const totalRecords=await RequestsModel.countDocuments({orgUniqName:orgUniqName,deleted:false})
+        return totalRecords;
+    }
+
+    public static async getSkipedRequestsByOrgUniqNameAndRequestStatus(orgUniqName:string,requestStatus:string,page:number,limit:number){
+        try{
+            const skip=(page-1)*limit;
+            const res= await RequestsModel.find({orgUniqName,requestStatus,deleted:false}).skip(skip).limit(limit);
             return res;
         }catch(e){return false;}
     }
@@ -16,9 +38,25 @@ export class RequestsDao{
         }catch(e){return false;}
     }
 
+    public static async getSkipedRequestsByOrgUniqNameAndAvailedAt(orgUniqName:string,availedAt:Date,page:number,limit:number){
+        try{
+            const skip=(page-1)*limit;
+            const res= await RequestsModel.find({orgUniqName,availedAt,deleted:false}).skip(skip).limit(limit);
+            return res;
+        }catch(e){return false;}
+    }
+
     public static async getRequestsByOrgUniqNameAndAvailedAt(orgUniqName:string,availedAt:Date):Promise<RequestsRow[]|boolean>{
         try{
             const res:RequestsRow[]= await RequestsModel.find({orgUniqName,availedAt,deleted:false});
+            return res;
+        }catch(e){return false;}
+    }
+
+    public static async getSkipedRequestsByOrgUniqNameAndCreatedAt(orgUniqName:string,createdAt:Date,page:number,limit:number){
+        try{
+            const skip=(page-1)*limit;
+            const res= await RequestsModel.find({orgUniqName,createdAt,deleted:false}).skip(skip).limit(limit);
             return res;
         }catch(e){return false;}
     }
@@ -50,6 +88,13 @@ export class RequestsDao{
             const res=await  RequestsModel.updateMany({orgUniqName:oldOrgUniqName,deleted:false},{$set:{orgUniqName}});
             if(res.modifiedCount>0)return true;
             return false;
+        }catch(e){return false;}
+    }
+
+    public static async deleteRequestsByOrgUniqueName(orgUniqName:string):Promise<boolean>{
+        try{
+            const res= await RequestsModel.updateMany({orgUniqName:orgUniqName,deleted:false},{$set:{deleted:true}});
+            return true;
         }catch(e){return false;}
     }
 }
