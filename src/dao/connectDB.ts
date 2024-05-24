@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
-import { DATABASE_URL } from '../constants/databaseUrl';
+import dotenv from 'dotenv';
 
-mongoose.connect(DATABASE_URL);
+dotenv.config()
+
+mongoose.connect(process.env.DATABASE_URL);
 mongoose.connection.on('open',()=>console.log("MondoDB conected"));
 mongoose.connection.on('error',(error:Error)=>console.log(error));

@@ -1,0 +1,1 @@
+export const secretKey='hdrayka9060@gmail.com';
