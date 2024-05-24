@@ -7,7 +7,7 @@ export class AdminServices{
     public static async getRequestList (orgUniqName:string,page:number,limit:number):Promise<GetRequestList[]>{
         try{
             const requestStatus='Pending';
-            const res=await RequestsDao.getSkipedRequestsByOrgUniqNameAndRequestStatus(orgUniqName,requestStatus,page,limit);
+            const res=await RequestsDao.getRequestsByOrgUniqNameAndRequestStatus(orgUniqName,requestStatus,page,limit);
             if(!res){return [];}
 
             let result:GetRequestList[]=[];
@@ -22,7 +22,7 @@ export class AdminServices{
 
     public static async getRequestListCount(orgUniqName:string):Promise<number>{
         try{
-            const totalRecords=await RequestsDao.getOrganisationListCount(orgUniqName);
+            const totalRecords=await RequestsDao.getOrganisationsCount(orgUniqName);
             return totalRecords;
         }catch(e){return 0;}
     }
@@ -40,10 +40,10 @@ export class AdminServices{
     public static async getFilterRequestList (obj:GetFilterRequestList):Promise<GetRequestList[]>{
         try{
             let res;
-            if(obj.filterType==='Request Status')res=await RequestsDao.getSkipedRequestsByOrgUniqNameAndRequestStatus(obj.orgUniqName,obj.requestStatus,obj.page,obj.limit);
+            if(obj.filterType==='Request Status')res=await RequestsDao.getRequestsByOrgUniqNameAndRequestStatus(obj.orgUniqName,obj.requestStatus,obj.page,obj.limit);
             else if (obj.filterType==='Availed By')res=await RequestsDao.getSkipedRequestsByOrgUniqNameAndUserEmail(obj.orgUniqName,obj.user,obj.page,obj.limit);
-            else if(obj.filterType==='Availed At')res=await RequestsDao.getSkipedRequestsByOrgUniqNameAndAvailedAt(obj.orgUniqName,obj.date,obj.page,obj.limit);
-            else res=await RequestsDao.getSkipedRequestsByOrgUniqNameAndCreatedAt(obj.orgUniqName,obj.date,obj.page,obj.limit);
+            else if(obj.filterType==='Availed At')res=await RequestsDao.getRequestsByOrgUniqNameAndAvailedAt(obj.orgUniqName,obj.date,obj.page,obj.limit);
+            else res=await RequestsDao.getRequestsByOrgUniqNameAndCreatedAt(obj.orgUniqName,obj.date,obj.page,obj.limit);
             if(!res){return [];}
             let result:GetRequestList[]=[];
             if(typeof res==='boolean')return result;
@@ -57,8 +57,14 @@ export class AdminServices{
 
     public static async updateRequestService(obj:UpdateRequestService):Promise<boolean>{
         try{
-            const res=await RequestsDao.updateRequestByOrgUniqNameAndUserEmailAndUserAndAvailedAtAndRequestStatus(obj);
+            const user=await UserDao.getUserByOrgUniqNameAndUserEmail(obj.orgUniqName,obj.userEmail);
+            if(typeof user==='boolean'){return false }
+            const res=await RequestsDao.updateRequestByOrgUniqNameAndUserEmailAndAvailedAtAndRequestStatus(obj);
             if(!res){return false;}
+            if(obj.requestStatus==='Approved'){
+                const wfh=await UserDao.updateUserWfh({userEmail:obj.userEmail,orgUniqName:obj.orgUniqName,wfh:user['wfh']+1});
+                if(!wfh)return false;
+            }
             return true;
         }catch(e){return false;}
     }

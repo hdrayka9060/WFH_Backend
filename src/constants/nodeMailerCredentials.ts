@@ -1,4 +1,4 @@
 export const HOST='smtp.ethereal.email';
 export const PORT=587;
-export const EMAIL='twila.stehr9@ethereal.email';
-export const PASS='HmCWHSpa7qQrNknRdf';
+export const EMAIL='gonzalo61@ethereal.email';
+export const PASS='SRcVAV1He2eGBaprWs';

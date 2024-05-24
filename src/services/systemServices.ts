@@ -6,9 +6,12 @@ import { EditOrganisation } from '../typings/orgnisationTypings';
 
 export class SystemServices {
 
-    public static async getOrganisationList(page:number,limit:number): Promise<OrganisationList[]> {
+    /*
+    * Function to get organisations
+    */
+    public static async getOrganisations(page:number,limit:number): Promise<OrganisationList[]> {
         try {
-            const res = await OrganisationDao.getOrganisationsList(page,limit);
+            const res = await OrganisationDao.getOrganisations(page,limit);
             let result = [];
             for (let i = 0; i < res.length; i++) {
                 result.push({'id':(page-1)*limit+i+1, 'orgUniqName': res[i]['orgUniqName'], 'orgDisplayName': res[i]['orgDisplayName'], 'orgAdmin': res[i]['orgAdmin'], 'maxWfh': res[i]['maxWfh'] });
@@ -17,13 +20,19 @@ export class SystemServices {
         } catch (e) { return []; }
     }
 
-    public static async getOrganisationListCount():Promise<number>{
+    /*
+    * Function to get organisations count
+    */
+    public static async getOrganisationsCount():Promise<number>{
         try{
-            const totalRecords=await OrganisationDao.getOrganisationListCount();
+            const totalRecords=await OrganisationDao.getOrganisationsCount();
             return totalRecords;
         }catch(e){return 0;}
     }
 
+    /*
+    * Function to get organisation users count
+    */
     public static async getOrganisationDataCount(orgUniqName:string):Promise<number>{
         try{
             const totalRecords=await OrganisationDao.getOrganisationDataCount(orgUniqName);
@@ -31,6 +40,9 @@ export class SystemServices {
         }catch(e){return 0;}
     }
 
+    /*
+    * Function to organisatios data
+    */
     public static async getOrganisationData(orgUniqName: string,page:number,limit:number): Promise<OrganisationData[]> {
         try {
             const res = await UserDao.getSkipedUserByOrgUniqName(orgUniqName,page,limit);
@@ -43,6 +55,9 @@ export class SystemServices {
         } catch (e) { return []; }
     }
 
+    /*
+    * Function to organisation users email
+    */
     public static async getOrganisationUsers(orgUniqName: string): Promise<string[]> {
         try {
             const res = await UserDao.getUserByOrgUniqName(orgUniqName);
@@ -52,16 +67,22 @@ export class SystemServices {
         } catch (e) { return []; }
     }
 
+    /*
+    * Function to create new organisation
+    */
     public static async createOrganisationService(obj: CreateOrganisation): Promise<boolean> {
         try {
             const org = await OrganisationDao.getOrganisationByOrgUniqName(obj.orgUniqName);
             if (org) return false;
-            const res = await OrganisationDao.addOrganisation(obj);
+            const res = await OrganisationDao.createOrganisation(obj);
             if (!res) { return false; }
             return true;
         } catch (e) { return false; }
     }
 
+    /*
+    * Function to edit organisation
+    */
     public static async editOrganisationService(obj: EditOrganisation): Promise<boolean> {
         try {
             const org = await OrganisationDao.getOrganisationByOrgUniqName(obj.orgUniqName);
@@ -70,24 +91,30 @@ export class SystemServices {
                 const user=await UserDao.getUserByOrgUniqNameAndUserEmail(obj.oldOrgUniqName,obj.orgAdmin);
                 if(typeof user==='boolean')return false;
             }
-            await OrganisationDao.editOrganisationbyOrgUniqName(obj);
+            await OrganisationDao.editOrganisationByOrgUniqName(obj);
             await RequestsDao.updateOrgUniqname(obj.oldOrgUniqName, obj.orgUniqName);
             await UserDao.updateOrgUniqname(obj.oldOrgUniqName, obj.orgUniqName);
             return true;
         } catch (e) { console.log("edit org err", e); return false; }
     }
 
-    public static async deleteOrganisationService(orgUniqName: string): Promise<boolean> {
+    /*
+    * Function to delive organisatoin
+    */
+    public static async deliveOrganisationService(orgUniqName: string): Promise<boolean> {
         try {
             const user=await UserDao.getUserByOrgUniqName(orgUniqName);
-            for(let i=0;i<user.length;i++)await UserDao.deleteUser(user[i]['userEmail'],orgUniqName);
-            const requests=await RequestsDao.deleteRequestsByOrgUniqueName(orgUniqName);
-            const res = await OrganisationDao.deleteOrganisationByOrgUniqNameAndSystemUser(orgUniqName);
+            for(let i=0;i<user.length;i++)await UserDao.deliveUser(user[i]['userEmail'],orgUniqName);
+            const requests=await RequestsDao.deliveRequestsByOrgUniqueName(orgUniqName);
+            const res = await OrganisationDao.deliveOrganisationByOrgUniqNameAndSystemUser(orgUniqName);
             if (!res) { return false; }
             return true;
         } catch (e) { console.log("err", e); return false; }
     }
 
+    /*
+    * Function to add user in organisation
+    */
     public static async addUserService(obj: AddUserService): Promise<boolean> {
         try {
             const user = await UserDao.getUserByOrgUniqNameAndUserEmail(obj.orgUniqName, obj.userEmail);
@@ -100,6 +127,9 @@ export class SystemServices {
         } catch (e) { return false; }
     }
 
+    /*
+    * Function to edit user details
+    */
     public static async editUserService(obj: EditUserService): Promise<boolean> {
         try {
             const user = await UserDao.getUserByOrgUniqNameAndUserEmail(obj.orgUniqName, obj.userEmail);
@@ -108,7 +138,7 @@ export class SystemServices {
                 const org = await OrganisationDao.getOrganisationByOrgUniqName(obj.orgUniqName);
                 if (typeof org === 'boolean') return false;
                 if (org['orgAdmin'] === obj.userOldEmail) {
-                    const change = OrganisationDao.editOrganisationAdminbyOrgUniqName(obj.orgUniqName, obj.userEmail);
+                    const change = OrganisationDao.editOrganisationAdminByOrgUniqName(obj.orgUniqName, obj.userEmail);
                     if (!change) return false;
                 }
             }
@@ -118,9 +148,12 @@ export class SystemServices {
         } catch (e) { return false; }
     }
 
+    /*
+    * Function to delive user
+    */
     public static async removeUserService(userEmail: string, orgUniqName: string): Promise<boolean> {
         try {
-            const res = await UserDao.deleteUser(userEmail, orgUniqName);
+            const res = await UserDao.deliveUser(userEmail, orgUniqName);
             if (!res) { return false; }
             return true;
         } catch (e) { return false; }

@@ -4,22 +4,23 @@ import { OrganisationDao } from '../dao/organisationDao';
 import { RequestWfh,CalenderData } from '../typings/commonTypings';
 import { UserRow } from '../typings/userTypings';
 import { OrganisationRow } from '../typings/orgnisationTypings';
-import { RequestsRow } from 'typings/requestsTypings';
+import { RequestsRow } from '../typings/requestsTypings';
 
 export class CommonServices{
-    public static async requestWfhService (obj:RequestWfh):Promise<boolean>{
+    /*
+    * Function to add new wfh request
+    */
+    public static async addWfhRequest (obj:RequestWfh):Promise<boolean>{
         try{
-            const user=await UserDao.getUserByOrgUniqNameAndUserEmail(obj.orgUniqName,obj.userEmail);
             const res=await RequestsDao.addRequest(obj);
-            
-            if(typeof user==='boolean'){return false }
-            const wfh=await UserDao.updateUserWfh({userEmail:obj.userEmail,orgUniqName:obj.orgUniqName,wfh:user['wfh']+1});
-            if(!wfh)return false;
             return true;        
         }catch(e){return false;}
     }
 
-    public static async userWfhService (orgUniqName:string, userEmail:string):Promise<{wfh:number,maxWfh:number}|boolean>{
+    /*
+    * Function to get users wfh count
+    */
+    public static async getUsersWfh (orgUniqName:string, userEmail:string):Promise<{wfh:number,maxWfh:number}|boolean>{
         try{
             const user:UserRow|boolean=await UserDao.getUserByOrgUniqNameAndUserEmail(orgUniqName,userEmail);
             const org:OrganisationRow|boolean=await OrganisationDao.getOrganisationByOrgUniqName(orgUniqName);
@@ -28,7 +29,10 @@ export class CommonServices{
         }catch(e){return false;}
     }
 
-    public static async getCalenderData(orgUniqName:string,userEmail:string):Promise<{result:CalenderData[],wfh:number,maxWfh:number}|boolean>{
+    /*
+    * Function to get users past wfh request
+    */
+    public static async getWfhRequestsData(orgUniqName:string,userEmail:string):Promise<{result:CalenderData[],wfh:number,maxWfh:number}|boolean>{
         try{
             const res:RequestsRow[]|boolean=await RequestsDao.getRequestsByOrgUniqNameAndUserEmail(orgUniqName,userEmail);
             const user:UserRow|boolean=await UserDao.getUserByOrgUniqNameAndUserEmail(orgUniqName,userEmail);

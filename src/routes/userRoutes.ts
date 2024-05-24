@@ -7,12 +7,8 @@ import { RequestWfhZodSchema } from '../middlewares/zod/zodSchemas/commonZodSche
 
 const router=Router();
 
-router.post('/requestwfh',ZodMiddleware.zodValidation(RequestWfhZodSchema),JwtMiddleware.jwtVerifyOrgUser,CommonContoller.requestWfh)
-router.get('/calender',JwtMiddleware.jwtVerifyOrgUser,CommonContoller.calender)
-router.get('/userwfh',JwtMiddleware.jwtVerifyOrgUser,CommonContoller.userWfh)
-
+router.post('/requestwfh',ZodMiddleware.zodValidation(RequestWfhZodSchema),JwtMiddleware.jwtVerifyOrgUser,CommonContoller.addWfhRequest)
+router.get('/calender',JwtMiddleware.jwtVerifyOrgUser,CommonContoller.getWfhRequests)
+router.get('/userwfh',JwtMiddleware.jwtVerifyOrgUser,CommonContoller.getUserWfh)
 
 export default router;
-
-// router.post('/requestWfh',ZodMiddleware.zodValidation(RequestWfhZodSchema),JwtMiddleware.jwtVerifyOrgUser,CommonContoller.requestWfh)
-// router.post('/calender',JwtMiddleware.jwtVerifyOrgUser,CommonContoller.calender)

@@ -28,11 +28,40 @@ export interface GetRequestList{
     requestStatus:string
 }
 
-export interface TypedRequestBody<T> extends Express.Request {
-    body: T
+export interface GetRequestListRequest{
+    page:number,
+    limit:number,
+    email:string,
+    organisation:string
 }
 
-export interface TypedResponseBody<T> extends Express.Response {
-    body: T
+export interface GetUsersListRequest{
+    email:string,
+    organisation:string
 }
 
+export interface GetFilterRequestListRequest{
+    filterType:string,
+    requestStatus:string,
+    user:string,
+    date:Date,
+    page:number,
+    limit:number,
+    email:string,
+    organisation:string
+}
+
+export interface AcceptRequestRequest{
+    organisationUserEmail:string,
+    availedAt:Date,
+    email:string,
+    organisation:string
+}
+
+export interface RejectRequestRequest{
+    organisationUserEmail:string,
+    availedAt:Date,
+    requestRejectionReason:string,
+    email:string,
+    organisation:string
+}
