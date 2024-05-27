@@ -65,3 +65,12 @@ export interface RejectRequestRequest{
     email:string,
     organisation:string
 }
+
+export interface ClearRequestRequest{
+    requestStatus:string,
+    organisationUserEmail:string,
+    availedAt:Date,
+    requestRejectionReason:string,
+    email:string,
+    organisation:string
+}

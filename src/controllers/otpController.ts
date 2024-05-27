@@ -17,11 +17,11 @@ export class OtpController{
             const user=await OtpServices.getUser(email);
             if(user)await OtpServices.updateUser({email,otp,time});
             else await OtpServices.addUser({email,otp,time});
-            return res.send({status:200,message:"Otp Sent"});
+            return res.send({message:"Otp Sent", error:"",ok:true});
         }
         catch(err){
             console.log("sendOtp err",err);
-            return res.send({status:400,message:"Some thing went wrong"});
+            return res.status(500).send({message:"Some thing went wrong", error:JSON.stringify(err),ok:false});
         }
     }
 
@@ -31,11 +31,11 @@ export class OtpController{
     public static async getOrganisations (req:Request<{},{},{}>,res:Response):Promise<Response>  {
         try{
             const result=await OtpServices.getOrganisations();
-            return res.send({status:200,message:"Success",data:result});
+            return res.send({message:"Success",data:result, error:"",ok:true});
         }
         catch(err){
             console.log("getOrg err",err);
-            return res.send({status:400,message:"Some thing went wrong"});
+            return res.status(500).send({message:"Some thing went wrong",data:[], error:JSON.stringify(err),ok:false});
         }
     }
 
@@ -48,19 +48,19 @@ export class OtpController{
             const time=new Date().getTime();
             const user=await OtpServices.getUser(email);
             if(typeof user==='boolean'){
-                return res.send({status:400,message:"Email Not Found",token:''});
+                return res.send({message:"Email Not Found",token:'', error:"",ok:false});
             }
             else if(user.otp==otp && (user.time-time)<15*60){
                 const token=await JwtMiddleware.jwtSign({email,userType,organisation});
-                return res.send({status:200,message:"User Verified",token:token});
+                return res.send({message:"User Verified",token:token, error:"",ok:true});
             }
             else{
-                return res.send({status:400,message:"Something went wrong",token:''});
+                return res.send({message:"Something went wrong",token:'', error:"",ok:false});
             }
         }
         catch(err){
             console.log("verifyOtp err",err);
-            return res.send({status:400,message:"Something went wrong"});
+            return res.status(500).send({message:"Something went wrong", error:JSON.stringify(err),ok:false});
         }
     }
 
@@ -71,12 +71,12 @@ export class OtpController{
         try{
             const {organisation}=  req.body;
             const user=await OtpServices.getOrganisationByOrgUniqName(organisation);
-            if(user)return res.send({status:200,admin:user});
-            else return res.send({status:400,admin:""});
+            if(user)return res.send({admin:user, error:"",ok:true});
+            else return res.send({admin:"", error:"",ok:false});
         }
         catch(err){
             console.log("verifyUserOrg err",err);
-            return res.send({status:400,admin:""});
+            return res.status(500).send({admin:"", error:JSON.stringify(err),ok:false});
         }
     }
 
@@ -87,12 +87,12 @@ export class OtpController{
         try{
             const {email,organisation}=  req.body;
             const user=await OtpServices.verifyUser(organisation,email);
-            if(user)return res.send({status:200,admin:user});
-            else return res.send({status:400,admin:""});
+            if(user)return res.send({admin:user, error:"",ok:true});
+            else return res.send({admin:"", error:"",ok:false});
         }
         catch(err){
             console.log("verifyUser err",err);
-            return res.send({status:400,admin:""});
+            return res.status(500).send({admin:"", error:JSON.stringify(err),ok:false});
         }
     }
 
@@ -103,12 +103,12 @@ export class OtpController{
         try{
             const {systemUserEmail}=req.body;
             const result=await OtpServices.verifySystemUser(systemUserEmail);
-            if(result)return res.send({status:200,message:"User Found"});
-            else return res.send({status:400,message:"User Not Found"});
+            if(result)return res.send({message:"User Found", error:"",ok:true});
+            else return res.send({message:"User Not Found", error:"",ok:false});
         }
         catch(err){
             console.log("verifySystemUser err",err);
-            return res.send({status:402,message:err.message});
+            return res.status(500).send({message:err.message, error:JSON.stringify(err),ok:false});
         }
     }
 

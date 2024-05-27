@@ -2,6 +2,7 @@ import { GetFilterRequestList, GetRequestList, UpdateRequestService } from '../t
 import { RequestsDao } from '../dao/requestsDao';
 import {UserDao } from '../dao/userDao'
 import { UserRow } from '../typings/userTypings';
+import { OrganisationDao } from '../dao/organisationDao';
 
 export class AdminServices{
     public static async getRequestList (orgUniqName:string,page:number,limit:number):Promise<GetRequestList[]>{
@@ -18,6 +19,16 @@ export class AdminServices{
             }
             return result;
         }catch(e){console.log("req list err",e);return [];}
+    }
+
+    public static async getUserWfh(userEmail:string,orgUniqName:string){
+        const user=await UserDao.getUserByOrgUniqNameAndUserEmail(orgUniqName,userEmail);
+        const org=await OrganisationDao.getOrganisationByOrgUniqName(orgUniqName);
+
+        if(typeof user==='boolean'||typeof org==='boolean'){return {wfh:0,maxWfh:0};}
+        const wfh=user['wfh'];
+        const maxWfh=org['maxWfh'];
+        return {wfh:wfh,maxWfh:maxWfh};
     }
 
     public static async getRequestListCount(orgUniqName:string):Promise<number>{

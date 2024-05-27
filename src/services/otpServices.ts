@@ -35,7 +35,7 @@ export class OtpServices{
     public static async sendOtp (email:string,otp:string):Promise<void>{
         const transporter =nodemailer.createTransport({
             host:process.env.HOST,
-            port:587,
+            port:Number(process.env.PORT),
             auth:{
                 user:process.env.EMAIL,
                 pass:process.env.PASS

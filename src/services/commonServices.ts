@@ -32,22 +32,20 @@ export class CommonServices{
     /*
     * Function to get users past wfh request
     */
-    public static async getWfhRequestsData(orgUniqName:string,userEmail:string):Promise<{result:CalenderData[],wfh:number,maxWfh:number}|boolean>{
+    public static async getWfhRequestsData(orgUniqName:string,userEmail:string,year:number,month:number):Promise<{result:CalenderData[],maxWfh:number}|boolean>{
         try{
-            const res:RequestsRow[]|boolean=await RequestsDao.getRequestsByOrgUniqNameAndUserEmail(orgUniqName,userEmail);
-            const user:UserRow|boolean=await UserDao.getUserByOrgUniqNameAndUserEmail(orgUniqName,userEmail);
+            const res:RequestsRow[]|boolean=await RequestsDao.getRequestsByOrgUniqNameAndUserEmailAndDates(orgUniqName,userEmail,year,month);
             const org:OrganisationRow|boolean=await OrganisationDao.getOrganisationByOrgUniqName(orgUniqName);
 
-            if(typeof res==='boolean'||typeof user==='boolean'||typeof org==='boolean'){return false;}
+            if(typeof res==='boolean'||typeof org==='boolean'){return false;}
 
-            const wfh=user['wfh'];
             const maxWfh=org['maxWfh'];
             
             let result=[];
             for(let i=0;i<res.length;i++){
                 result.push({requestStatus:res[i]['requestStatus'],rejectionReason:res[i]['rejectionReason'],wfhReason:res[i]['wfhReason'],approvalAt:res[i]['approvalAt'],createdAt:res[i]['createdAt'],availedAt:res[i]['availedAt']})
             }
-            return {result:result,wfh:wfh,maxWfh:maxWfh};
+            return {result:result,maxWfh:maxWfh};
         }catch(e){return false;}
     }    
 }

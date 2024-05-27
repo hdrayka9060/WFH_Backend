@@ -30,6 +30,8 @@ export interface GetUserWfhRequest{
 }
 
 export interface GetWfhRequestsRequest{
+    year:number,
+    month:number,
     email:string,
     organisation:string
 }

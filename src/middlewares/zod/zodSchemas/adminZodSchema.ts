@@ -11,8 +11,8 @@ export const FilterRequestListZodSchema=z.object({
     requestStatus:z.enum(['Approved','Pending','Rejected','']),
     user:z.string(),
     date:z.string().datetime().or(z.undefined()),
-    page:z.number({required_error:"Page number is required"}),
-    limit:z.number({required_error:"Limit number is required"})
+    // page:z.number({required_error:"Page number is required"}),
+    // limit:z.number({required_error:"Limit number is required"})
 })
 
 export const AcceptRequestZodSchema=z.object({
